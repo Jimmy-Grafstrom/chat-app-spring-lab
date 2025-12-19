@@ -38,68 +38,53 @@ profile 1-1 user
 tag *-* messages
 
 
- # Databasmodellering för Chat-applikation                                                                                                                                                 │
-│                                                                                                                                                                                           │
-│ ## Processbeskrivning                                                                                                                                                                     │
-│                                                                                                                                                                                           │
-│ ### 1. Konceptuell Modell                                                                                                                                                                 │
-│ Vi utgår från de befintliga entiteterna `User` och `Message`. För att möta de nya kraven identifierades följande behov:                                                                   │
-│ - **Kommentarer:** En hierarkisk relation där en kommentar tillhör både en User (skribent) och ett Message (förälder).                                                                    │
-│ - **Profil:** En utökning av User-data. Valet gjordes att bryta ut detta till en egen entitet (`Profile`) för att hålla `User`-tabellen ren och möjliggöra "Lazy Loading" av tyngre       │
-│ profilinformation. Relationen är 1-till-1.                                                                                                                                                │
-│ - **Taggar:** Ett behov av att kategorisera meddelanden. Eftersom en tagg kan användas på flera meddelanden, och ett meddelande kan ha flera taggar, krävs en Många-till-Många-relation.  │
-│                                                                                                                                                                                           │
-│ ### 2. Logisk Modell                                                                                                                                                                      │
-│ Lösningen implementeras via följande tabellstruktur:                                                                                                                                      │
-│                                                                                                                                                                                           │
-│ *   **comment:** Kopplar ihop text med `users` och `messages`.                                                                                                                            │
-│ *   **profile:** Håller profilbild (URL) och bio. Kopplas till `users` via en Foreign Key som också är unik (för att garantera 1-till-1).                                                 │
-│ *   **tag:** Håller själva tagg-namnet unikt.                                                                                                                                             │
-│ *   **message_tags:** En kopplingstabell (Junction Table) som löser Många-till-Många-relationen mellan `messages` och `tag` genom att hålla par av ID:n.                                  │
-│                                                                                                                                                                                           │
-│ ### 3. Fysisk Modell (SQL)                                                                                                                                                                │
-│                                                                                                                                                                                           │
-│ Här är SQL-koden för att skapa de nya tabellerna i MySQL.                                                                                                                                 │
-│                                                                                                                                                                                           │
-│ ```sql                                                                                                                                                                                    │
-│ -- Tabell för Kommentarer                                                                                                                                                                 │
-│ -- Relation: Many-To-One mot både users och messages                                                                                                                                      │
-│ CREATE TABLE comment (                                                                                                                                                                    │
-│     id BIGINT AUTO_INCREMENT PRIMARY KEY,                                                                                                                                                 │
-│     text TEXT,                                                                                                                                                                            │
-│     timestamp DATETIME(6),                                                                                                                                                                │
-│     user_id BIGINT NOT NULL,                                                                                                                                                              │
-│     message_id BIGINT NOT NULL,                                                                                                                                                           │
-│     FOREIGN KEY (user_id) REFERENCES users(id) ON DELETE CASCADE,                                                                                                                         │
-│     FOREIGN KEY (message_id) REFERENCES messages(id) ON DELETE CASCADE                                                                                                                    │
-│ );                                                                                                                                                                                        │
-│                                                                                                                                                                                           │
-│ -- Tabell för Profiler                                                                                                                                                                    │
-│ -- Relation: One-To-One mot users                                                                                                                                                         │
-│ -- Vi sätter user_id som UNIQUE för att garantera att en användare bara har en profil                                                                                                     │
-│ CREATE TABLE profile (                                                                                                                                                                    │
-│     id BIGINT AUTO_INCREMENT PRIMARY KEY,                                                                                                                                                 │
-│     user_id BIGINT NOT NULL UNIQUE,                                                                                                                                                       │
-│     profile_picture VARCHAR(255), -- Sparar URL/Sökväg till bilden, inte binärdata                                                                                                        │
-│     biography VARCHAR(255),                                                                                                                                                               │
-│     FOREIGN KEY (user_id) REFERENCES users(id) ON DELETE CASCADE                                                                                                                          │
-│ );                                                                                                                                                                                        │
-│                                                                                                                                                                                           │
-│ -- Tabell för Taggar                                                                                                                                                                      │
-│ -- Innehåller unika namn på taggar                                                                                                                                                        │
-│ CREATE TABLE tag (                                                                                                                                                                        │
-│     id BIGINT AUTO_INCREMENT PRIMARY KEY,                                                                                                                                                 │
-│     name VARCHAR(100) UNIQUE                                                                                                                                                              │
-│ );                                                                                                                                                                                        │
-│                                                                                                                                                                                           │
-│ -- Kopplingstabell för Meddelanden och Taggar                                                                                                                                             │
-│ -- Löser Many-To-Many relationen                                                                                                                                                          │
-│ -- Primary Key är kombinationen av message_id och tag_id                                                                                                                                  │
-│ CREATE TABLE message_tags (                                                                                                                                                               │
-│     message_id BIGINT NOT NULL,                                                                                                                                                           │
-│     tag_id BIGINT NOT NULL,                                                                                                                                                               │
-│     PRIMARY KEY (message_id, tag_id),                                                                                                                                                     │
-│     FOREIGN KEY (message_id) REFERENCES messages(id) ON DELETE CASCADE,                                                                                                                   │
-│     FOREIGN KEY (tag_id) REFERENCES tag(id) ON DELETE CASCADE                                                                                                                             │
-│ );                                                                                                                                                                                        │
-│ ```
+CREATE TABLE users
+(
+    id       BIGINT AUTO_INCREMENT PRIMARY KEY,
+    username VARCHAR(20) NOT NULL UNIQUE,
+    password VARCHAR(20) NOT NULL
+);
+
+CREATE TABLE messages
+(
+    id        BIGINT AUTO_INCREMENT PRIMARY KEY,
+    text      TEXT,
+    timestamp DATETIME(6),
+    user_id   BIGINT,
+    FOREIGN KEY (user_id) REFERENCES users (id) on delete CASCADE
+);
+
+CREATE TABLE comment
+(
+    id        BIGINT AUTO_INCREMENT PRIMARY KEY,
+    text      TEXT,
+    timestamp DATETIME(6),
+    user_id   BIGINT NOT NULL,
+    message_id BIGINT NOT NULL,
+    FOREIGN KEY (user_id) REFERENCES users (id) ON DELETE CASCADE,
+    FOREIGN KEY (message_id) REFERENCES messages (id) ON DELETE CASCADE
+);
+
+CREATE TABLE profile
+(
+    id        BIGINT AUTO_INCREMENT PRIMARY KEY,
+    user_id BIGINT NOT NULL,
+    profile_picture VARCHAR(250),
+    biography VARCHAR(250),
+        FOREIGN KEY (user_id) REFERENCES users(id) ON DELETE CASCADE
+);
+
+CREATE TABLE tag
+(
+    id   BIGINT AUTO_INCREMENT PRIMARY KEY,
+    name VARCHAR(100) UNIQUE
+);
+
+CREATE TABLE message_tags
+(
+    message_id BIGINT NOT NULL,
+    tag_id     BIGINT NOT NULL,
+    PRIMARY KEY (message_id, tag_id),
+    FOREIGN KEY (message_id) REFERENCES messages (id) ON DELETE CASCADE,
+    FOREIGN KEY (tag_id) REFERENCES tag (id) ON DELETE CASCADE
+);
