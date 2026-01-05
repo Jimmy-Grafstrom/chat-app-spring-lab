@@ -20,7 +20,6 @@ private User user;
     @InjectMocks
     private UserService userService;
 
-
     @Test
     void login() {
         user = new User(1L, "username", "password");
@@ -45,7 +44,14 @@ private User user;
 
     @Test
     void register() {
-        userService.register(user);
-        verify(userRepository, times(1)).save(user);
+        User userToSave = new User("username", "password");
+        User savedUser = new User(1L, "username", "password");
+        when(userRepository.save(userToSave)).thenReturn(savedUser);
+
+        User result = userService.register(userToSave);
+        assertNotNull(result);
+        assertEquals("username", result.getUsername());
+        assertEquals(1L, result.getId());
+        verify(userRepository, times(1)).save(userToSave);
     }
 }

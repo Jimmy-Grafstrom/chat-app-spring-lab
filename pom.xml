@@ -13,7 +13,6 @@
     <version>1.0-SNAPSHOT</version>
 
     <properties>
-        <!--TODO: ändra Java-version till den version du använder -->
         <maven.compiler.source>21</maven.compiler.source>
         <maven.compiler.target>21</maven.compiler.target>
         <project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
@@ -45,7 +44,6 @@
             <artifactId>h2</artifactId>
             <scope>runtime</scope>
         </dependency>
-        <!-- TODO: Lägg till dependencies för spring-data-jpa och mysql via Add Starters.. eller manuellt-->
     </dependencies>
     <build>
         <plugins>
