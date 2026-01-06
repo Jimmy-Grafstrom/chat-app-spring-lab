@@ -1,3 +1,10 @@
+# Relationer
+
+comment *-1 messages
+comment *-1 user
+profile 1-1 user
+tag *-* messages
+
 user
     - user_id (PK)
     - username
@@ -32,10 +39,6 @@ message_tags
     - message_id (FK)
     - tag_id (FK)
 
-comment *-1 messages
-comment *-1 user
-profile 1-1 user
-tag *-* messages
 
 
 CREATE TABLE users
