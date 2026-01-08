@@ -1,5 +1,6 @@
 package se.sprinto.hakan.chatapp.service;
 
+import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
 import org.mockito.InjectMocks;
@@ -13,45 +14,62 @@ import static org.mockito.Mockito.*;
 
 @ExtendWith(MockitoExtension.class)
 class UserServiceTest {
-private User user;
+    private User existingUser;
+    private User nonExistingUser;
+
     @Mock
     private UserRepository userRepository;
 
     @InjectMocks
     private UserService userService;
 
+    @BeforeEach
+    void setUp() {
+        existingUser = new User(1L, "username", "password");
+        nonExistingUser = new User("nonExisting", "nonExisting");
+    }
+
     @Test
     void login() {
-        user = new User(1L, "username", "password");
+//      ARRANGE
+        when(userRepository.findByUsernameAndPassword(existingUser.getUsername(), existingUser.getPassword())).thenReturn(existingUser);
 
-        when(userRepository.findByUsernameAndPassword(user.getUsername(), user.getPassword())).thenReturn(user);
-        User loggedInUser = userService.login(user.getUsername(), user.getPassword());
+//      ACT
+        User loggedInUser = userService.login(existingUser.getUsername(), existingUser.getPassword());
+
+//      ASSERT
         assertNotNull(loggedInUser);
-        assertEquals(user.getId(), loggedInUser.getId(), "id på user och inloggad user borde matcha");
-        verify(userRepository, times(1)).findByUsernameAndPassword(user.getUsername(), user.getPassword());
+        assertEquals(existingUser.getId(), loggedInUser.getId(), "id på user och inloggad user borde matcha");
+        verify(userRepository, times(1)).findByUsernameAndPassword(existingUser.getUsername(), existingUser.getPassword());
     }
 
     @Test
     void userNotFound() {
-        String username = "non existing username";
-        String password = "non existing password";
-        when(userRepository.findByUsernameAndPassword(username, password)).thenReturn(null);
-        User nonExistingUser = userService.login(username, password);
-        assertNull(nonExistingUser);
-        verify(userRepository, times(1)).findByUsernameAndPassword(username, password);
+//      ARRANGE
+        when(userRepository.findByUsernameAndPassword(nonExistingUser.getUsername(), nonExistingUser.getPassword())).thenReturn(null);
+
+//      ACT
+        User result = userService.login(nonExistingUser.getUsername(), nonExistingUser.getPassword());
+
+//      ASSERT
+        assertNull(result);
+        verify(userRepository, times(1)).findByUsernameAndPassword(nonExistingUser.getUsername(), nonExistingUser.getPassword());
 
     }
 
     @Test
     void register() {
-        User userToSave = new User("username", "password");
-        User savedUser = new User(1L, "username", "password");
-        when(userRepository.save(userToSave)).thenReturn(savedUser);
+//      ARRANGE
+        User savedUser = new User(10L, nonExistingUser.getUsername(), nonExistingUser.getPassword());
+        when(userRepository.save(nonExistingUser)).thenReturn(savedUser);
+//
+//      ACT
+        User result = userService.register(nonExistingUser);
 
-        User result = userService.register(userToSave);
+//      ASSERT
         assertNotNull(result);
-        assertEquals("username", result.getUsername());
-        assertEquals(1L, result.getId());
-        verify(userRepository, times(1)).save(userToSave);
+        assertEquals("nonExisting", result.getUsername());
+        assertEquals(10L, result.getId());
+        verify(userRepository, times(1)).save(nonExistingUser);
     }
 }

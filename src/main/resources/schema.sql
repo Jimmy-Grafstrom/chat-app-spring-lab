@@ -1,3 +1,4 @@
+# --- Första tabellerna ---
 CREATE TABLE users
 (
     id       BIGINT AUTO_INCREMENT PRIMARY KEY,
@@ -14,6 +15,7 @@ CREATE TABLE messages
     FOREIGN KEY (user_id) REFERENCES users (id) on delete CASCADE
 );
 
+# --- Databasmodellering ---
 CREATE TABLE comment
 (
     id        BIGINT AUTO_INCREMENT PRIMARY KEY,

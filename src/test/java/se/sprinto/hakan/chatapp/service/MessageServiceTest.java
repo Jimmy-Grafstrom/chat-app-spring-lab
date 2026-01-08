@@ -23,6 +23,8 @@ class MessageServiceTest {
     private Message messageToSave;
     private List<Message> testMessages;
     private User user;
+    private LocalDateTime now;
+
     @Mock
     private MessageRepository messageRepository;
     @InjectMocks
@@ -30,33 +32,37 @@ class MessageServiceTest {
 
     @BeforeEach
     void setUp() {
-        user = new User();
-        user.setId(1L);
-        user.setUsername("username");
-        user.setPassword("password");
-        message1 = new Message(user,"hej", LocalDateTime.now());
-        message2 = new Message(user, "hejdå", LocalDateTime.now().minusMinutes(5L));
-        testMessages = List.of(message1, message2);
-
-        user.setMessages(testMessages);
-
-
+        now = LocalDateTime.now();
+        user = new User(1L, "username", "password");
     }
 
     @Test
     void save() {
-        messageToSave = new Message(user, "vi ses", LocalDateTime.now().minusMinutes(1L));
+//      ARRANGE
+        messageToSave = new Message(user, "vi ses", now.minusMinutes(1L));
+
+//      ACT
         messageService.save(messageToSave);
+
+//      ASSERT
         verify(messageRepository, times(1)).save(messageToSave);
     }
 
     @Test
     void getMessages() {
-        String textOfMessage1 = "hej";
+//      ARRANGE
+        message1 = new Message(user,"hej", now);
+        message2 = new Message(user, "hejdå", now.minusMinutes(5L));
+        testMessages = List.of(message1, message2);
+        user.setMessages(testMessages);
         when(messageRepository.findByUserId(user.getId())).thenReturn(user.getMessages());
+
+//      ACT
         List<Message> result = messageService.getMessages(1L);
+
+//      ASSERT
         assertEquals(2, result.size());
-        assertEquals(textOfMessage1, result.get(0).getText());
+        assertEquals("hej", result.get(0).getText());
         verify(messageRepository, times(1)).findByUserId(1L);
     }
 }
